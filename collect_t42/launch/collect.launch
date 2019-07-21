@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="collect_t42" name="collect" type="collect_data.py" output="screen">
+        <rosparam command="load" file="$(find collect_t42)/param/settings.yaml" />
+  </node>
+
+  <node pkg="collect_t42" name="actor_record" type="actor_record.py" output="screen">
+        <rosparam command="load" file="$(find collect_t42)/param/settings.yaml" />
+  </node>
+
+</launch>

@@ -1,0 +1,4 @@
+object_name: 'cyl35'
+Freq: 10
+actions_mode: 'discrete'
+collect_mode: 'auto'
