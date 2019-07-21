@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+Commands the motion of the hand in auto or manual mode.
+'''
+
 import rospy
 import numpy as np
 import time

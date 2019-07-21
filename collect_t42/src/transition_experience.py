@@ -1,3 +1,13 @@
+#!/usr/bin/python 
+
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+Class to store and save recorded data
+'''
 
 import numpy as np
 import pickle
@@ -10,7 +20,7 @@ version = '0'
 Obj = 'obj'
 
 class transition_experience():
-    path = '/home/pracsys/catkin_ws/src/t42_control/hand_control/data/'
+    path = './' # Set data file path here.
 
     def __init__(self, Load=True, discrete = True, postfix='', Object = Obj, with_fingers = False):
 

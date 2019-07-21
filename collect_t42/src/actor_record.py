@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+Node that records the state of the hand with a given frequency
+'''
+
 import rospy
 import numpy as np
 import time

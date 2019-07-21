@@ -4,10 +4,14 @@
 ----------------------------
 Author: Avishai Sintov
         Rutgers University
+        https://github.com/avishais
 Date: October 2018
 ----------------------------
 '''
 
+'''
+This node enables discrete manual control (via keyboard) on the motion of the hand.
+'''
 
 import rospy
 import numpy as np 
@@ -85,20 +89,7 @@ class keyboard_control():
                 if np.all(k == self.A[8]):
                     self.ch = ord('s')
 
-            rate.sleep()
-
-#     def getchar(self):
-#    #Returns a single character from standard input
-        
-#         fd = sys.stdin.fileno()
-#         old_settings = termios.tcgetattr(fd)
-#         try:
-#             tty.setraw(sys.stdin.fileno())
-#             ch = sys.stdin.read(1)
-#         finally:
-#             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-#         return ch
-
+            rate.sleep(
 
     def ActPosCallback(self, msg):
         self.act_angles = np.array(msg.data)
@@ -154,7 +145,7 @@ class keyboard_control():
         states = np.array(SA.states).reshape(-1,13)
         actions = np.array(SA.actions).reshape(-1,2)
 
-        path_file = '/home/pracsys/catkin_ws/src/t42_control/rollout_t42/manual_rolls/manual_path_' + self.Obj + '_' + str(self.num) + '.pkl' 
+        path_file = './manual_path_' + self.Obj + '_' + str(self.num) + '.pkl' 
         with open(path_file, 'w') as f: 
             pickle.dump([states, actions], f)
         self.num += 1
