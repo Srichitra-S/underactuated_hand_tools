@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+Node that records the rollout (states and actions)
+'''
+
 import rospy
 from std_msgs.msg import String, Float32MultiArray, Bool
 from std_srvs.srv import Empty, EmptyResponse, SetBool
-from rollout_t42.srv import rolloutReq, rolloutReqFile, plotReq, observation, IsDropped, TargetAngles, gets
-from hand_control.srv import RegraspObject, close
+from rollout_t42.srv import gets
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -42,9 +50,7 @@ class rolloutRecorder():
 
         rospy.Subscriber('/gripper/load', Float32MultiArray, self.callbackGripperLoad)
         rospy.Subscriber('/hand_control/obj_pos_mm', Float32MultiArray, self.callbackObj)
-        # rospy.Subscriber('/cylinder_drop', Bool, self.callbackObjectDrop)
         rospy.Subscriber('/rollout/action', Float32MultiArray, self.callbackAction)
-        # rospy.Subscriber('/rollout/move_success', Bool, self.callbackSuccess)
         rospy.Subscriber('/rollout/fail', Bool, self.callbacFail)
         rospy.Subscriber('/object_orientation',Float32MultiArray, self.callbackOrientation)
         rospy.Subscriber('/finger_markers', geometry_msgs.msg.PoseArray, self.callAddFingerPos)
@@ -53,6 +59,7 @@ class rolloutRecorder():
         rospy.Service('/rollout/get_states', gets, self.get_states)
         rollout_actor_srv = rospy.ServiceProxy('/rollout/run_trigger', SetBool)
         rollout_srv = rospy.ServiceProxy('/rollout/run_trigger', SetBool)
+        
         if record_images:
             rospy.Subscriber('/camera/color/image_raw', Image, self.callbackImage,  queue_size = 1)
             rospy.Subscriber('/marker2D', geometry_msgs.msg.Pose, self.callbackPosImage)
@@ -67,14 +74,12 @@ class rolloutRecorder():
 
             if self.running:
                 self.state = np.concatenate((self.obj_pos, self.angle, self.marker0, self.marker1, self.marker2, self.marker3, self.gripper_load), axis=0)
-                # self.state = np.concatenate((self.obj_pos, self.gripper_load, self.marker0, self.marker1, self.marker2, self.marker3,), axis=0)
                     
                 self.S.append(self.state)
                 self.A.append(self.action)
                 self.T.append(rospy.get_time() - self.T0)
 
                 if record_images:
-                    
                     self.images.append(self.I)
                     self.Simage.append(self.pos_image)
                     self.Timages.append(rospy.get_time() - self.T0)
@@ -101,12 +106,7 @@ class rolloutRecorder():
         self.angle = msg.data
 
     def callbackImage(self, msg):
-        # self.I = msg.data
         self.I = np.fromstring(msg.data, np.uint8).reshape(480,640,3)
-        # self.I = cv2.imdecode(self.I, -1)
-        # print self.I.shape
-        # plt.imshow(self.I)
-        # plt.show()
 
     def callbackPosImage(self, msg):
         self.pos_image = np.array([msg.position.x, msg.position.y])
@@ -143,26 +143,12 @@ class rolloutRecorder():
         return {'success': True, 'message': ''}
 
     def get_states(self, msg):
-
         if record_images:
-            with open('/media/pracsys/DATA/hand_images_data/rollout_blue_' + str(np.random.randint(10000)) + '.pkl', 'wb') as f:
+            with open('./rollout_' + str(np.random.randint(10000)) + '.pkl', 'wb') as f:
                 pickle.dump([self.Timages, self.Simage, self.images, self.S, self.A, self.T], f)          
 
         return {'states': np.array(self.S).reshape((-1,)), 'actions': np.array(self.A).reshape((-1,)), 'time': np.array(self.T).reshape((-1,))}
-
-    def medfilter(self, x, W):
-        print('[rollout_recorder] Smoothing data...')
-        w = int(W/2)
-        x_new = np.copy(x)
-        for i in range(0, x.shape[0]):
-            if i < w:
-                x_new[i] = np.mean(x[:i+w])
-            elif i > x.shape[0]-w:
-                x_new[i] = np.mean(x[i-w:])
-            else:
-                x_new[i] = np.mean(x[i-w:i+w])
-        return x_new
-
+        
 if __name__ == '__main__':
     try:
         rolloutRecorder()

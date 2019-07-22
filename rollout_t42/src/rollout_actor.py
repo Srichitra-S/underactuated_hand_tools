@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+Node that subsrives to the sequence of actions and commands the actuators to move.
+'''
+
 import rospy
 from std_msgs.msg import String, Float32MultiArray, Bool
 from std_srvs.srv import Empty, EmptyResponse, SetBool
-from rollout_t42.srv import rolloutReq, rolloutReqFile, plotReq, observation, IsDropped, TargetAngles
-from hand_control.srv import RegraspObject, close
+from rollout_t42.srv import TargetAngles
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -12,9 +20,6 @@ import pickle
 
 class rollout():
 
-    states = []
-    plot_num = 0
-    arm_status = ' '
     drop = True
     running = False
     action = np.array([0.,0.])
@@ -25,21 +30,19 @@ class rollout():
         rospy.init_node('rollout_actor_t42', anonymous=True)
 
         self.move_srv = rospy.ServiceProxy('/MoveGripper', TargetAngles)
-        self.arm_reset_srv = rospy.ServiceProxy('/RegraspObject', RegraspObject)
-        rospy.Subscriber('/cylinder_drop', Bool, self.callbackObjectDrop)
         rospy.Subscriber('/rollout/action', Float32MultiArray, self.callbackAction)
-        # suc_pub = rospy.Publisher('/rollout/move_success', Bool, queue_size=10)
         fail_pub = rospy.Publisher('/rollout/fail', Bool, queue_size = 10)
         self.running_pub = rospy.Publisher('/rollout_actor/runnning', Bool, queue_size = 10)
-
         rospy.Service('/rollout/run_trigger', SetBool, self.callbackTrigger)
+
+        # Marker detection - Needs to be implemented by the user
+        rospy.Subscriber('/cylinder_drop', Bool, self.callbackObjectDrop)
 
         print('[rollout_actor] Ready to rollout...')
         self.running_pub.publish(False)
 
-        self.rate = rospy.Rate(2.5) # 15hz
+        self.rate = rospy.Rate(2.5) # 2.5hz limit due to communication band width
         while not rospy.is_shutdown():
-            # suc_pub.publish(self.suc)
 
             if self.running:
                 self.suc = self.move_srv(self.action).success
@@ -69,7 +72,6 @@ class rollout():
 
     def callbackTrigger(self, msg):
         self.running = msg.data
-        print "-------------------------------------"
         if self.running:
             print("[rollout_actor] Started ...")
             self.suc = True
