@@ -1,3 +1,6 @@
+:construction_worker: :construction:**_This page is under construction_**:construction: :construction_worker:
+
+
 # Benchmarking for underactuated adaptive hands
 
 This page provides instructions and source code for benchmarking underactuated adaptive hands. This is complementary material to the paper
@@ -7,22 +10,19 @@ Underactuated Adaptive Hands***
 
 submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchmarking for Manipulations*.
 
+**The code is based on ROS and tested in Kinetic.**
+
 ---
 ## RUM dataset
 
 ---
 
-All code is based on ROS and tested in Kinetic.
 
 ## Real-hand code
 
 ### Model T42
 
-1. Switch to the real hand code
-
-   ```
-   git checkout master
-   ``` 
+1. Use Model T42 real hand ROS packages in `./ModelT42/`.
 
 2. Load hand control node
    
@@ -45,13 +45,14 @@ All code is based on ROS and tested in Kinetic.
 
 ### Model O
 
+1. Use Model O real hand ROS packages in `./ModelO/`.
+
+
 ## Physics-engine simulation
 
-1. Switch to the simulation branch: 
+The Gazebo simulation package contains the Model-O (3-fingers), Model-T42 (2-fingers) and reflex (3-fingers) hands. However, currently the data collection and rollout package only supports the 2-fingers Model-T42 hand.
 
-   ```
-   git checkout simulation
-   ``` 
+1. Use simulated hand ROS packages in `./simulated_hand/`. 
 
 2. Clone the simulation [repo](https://github.com/avishais/gazebo_adaptive_hand_simulator.git) and follow instructions to launch it.
 
