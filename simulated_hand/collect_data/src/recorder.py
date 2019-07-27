@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+Node that records the state of the hand with a given frequency
+'''
+
 import rospy
 import numpy as np
 import time
@@ -14,7 +23,6 @@ class actorPubRec():
 
     gripper_pos = np.array([0., 0.])
     gripper_load = np.array([0., 0.])
-    gripper_load_prev = np.array([0., 0.])
     obj_pos = np.array([0., 0.])
     obj_vel = np.array([0., 0.])
     drop = True
@@ -26,10 +34,10 @@ class actorPubRec():
     joint_velocities = np.array([0., 0., 0., 0.])
     n = 0
     
-    texp = transition_experience(Load=True, discrete = discrete_actions, postfix='_bu')
+    texp = []
 
     def __init__(self):
-        rospy.init_node('actor_pub_record', anonymous=True)
+        rospy.init_node('collect_recorder', anonymous=True)
 
         rospy.Subscriber('/gripper/load', Float32MultiArray, self.callbackGripperLoad)
         rospy.Subscriber('/hand/obj_pos', Float32MultiArray, self.callbackObj)
@@ -39,27 +47,27 @@ class actorPubRec():
         rospy.Subscriber('/hand_control/cylinder_drop', Bool, self.callbackDrop)
         rospy.Subscriber('/collect/gripper_action', Float32MultiArray, self.callbackAction)
 
-        rospy.Service('/actor/trigger', Empty, self.callbackTrigger)
-        rospy.Service('/actor/save', Empty, self.callbackSave)
+        rospy.Service('/recorder/trigger', Empty, self.callbackTrigger)
+        rospy.Service('/recorder/save', Empty, self.callbackSave)
 
-        rate = rospy.Rate(2)
+        if rospy.has_param('~object_name'):
+            Obj = rospy.get_param('~object_name')
+            Freq = rospy.get_param('~Freq')
+            self.discrete_actions = True if rospy.get_param('~actions_mode') == 'discrete' else False
+        self.texp = transition_experience(Load=True, discrete = self.discrete_actions, Object = Obj, postfix='')
+
+        rate = rospy.Rate(Freq)
         count = 0
         while not rospy.is_shutdown():
 
             if self.running:
-                dL = self.gripper_load - self.gripper_load_prev
-                self.gripper_load_prev = np.copy(self.gripper_load)
-                self.state = np.concatenate((self.obj_pos, self.gripper_load, self.obj_vel, dL), axis=0)
-                
+                self.state = np.concatenate((self.obj_pos, self.gripper_load, self.obj_vel, self.joint_states, self.joint_velocities), axis=0)
                 
                 self.texp.add(self.state, self.action, self.state, self.drop)
 
                 if self.drop:
                     print('[recorder] Episode ended (%d points so far).' % self.texp.getSize())
                     self.running = False
-                    # if not (count % 20):
-                        # self.texp.save()
-                    # count += 1
 
             rate.sleep()
 

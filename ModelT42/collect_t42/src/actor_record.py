@@ -52,11 +52,11 @@ class actorPubRec():
         rospy.Subscriber('/cylinder_drop', Bool, self.callbackDrop)
         rospy.Subscriber('/finger_markers', geometry_msgs.msg.PoseArray, self.callAddFingerPos)
 
-        if rospy.has_param('~objeobject_namect'):
+        if rospy.has_param('~object_name'):
             Obj = rospy.get_param('~object_name')
             Freq = rospy.get_param('~Freq')
             self.discrete_actions = True if rospy.get_param('~actions_mode') == 'discrete' else False
-        self.texp = transition_experience(Load=True, discrete = self.discrete_actions, Object = Obj postfix = '')
+        self.texp = transition_experience(Load=True, discrete = self.discrete_actions, Object = Obj, postfix = '')
 
         rate = rospy.Rate(Freq)
         count = 1

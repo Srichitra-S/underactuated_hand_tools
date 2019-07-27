@@ -42,6 +42,7 @@ submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchm
    ```
    roslaunch rollout_t42 rollout.launch
    ```
+   Example usage of the rollout service is included in the package.
 
 ### Model O
 
@@ -50,11 +51,25 @@ submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchm
 
 ## Physics-engine simulation
 
-The Gazebo simulation package contains the Model-O (3-fingers), Model-T42 (2-fingers) and reflex (3-fingers) hands. However, currently the data collection and rollout package only supports the 2-fingers Model-T42 hand.
+The Gazebo simulation package contains the Model-O (3-fingers), Model-T42 (2-fingers) and reflex (3-fingers) hands. However, currently the data collection and rollout package only supports the 2-fingers Model-T42 hand. Operation is similar 
 
 1. Use simulated hand ROS packages in `./simulated_hand/`. 
 
 2. Clone the simulation [repo](https://github.com/avishais/gazebo_adaptive_hand_simulator.git) and follow instructions to launch it.
+
+3. To collect data
+   - Set the [settings yaml file](https://github.com/avishais/underactuated_hand_benchmarking/tree/master/collect_t42/param) as desired. 
+   - Run:
+
+      ```
+      roslaunch collect_t42 collect.launch
+      ```
+
+4. To rollout a sequence of actions, launch the required service
+   ```
+   roslaunch rollout_t42 rollout.launch
+   ```
+   Example usage of the rollout service is included in the package.
 
 
 

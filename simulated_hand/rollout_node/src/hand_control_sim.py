@@ -1,13 +1,20 @@
 #!/usr/bin/python 
 
+'''
+Author: Avishai Sintov
+        https://github.com/avishais
+'''
+
+'''
+This node provides services similar to the real hand to control the simulated hand in Gazebo.
+'''
+
 import rospy
 import numpy as np 
 from std_msgs.msg import Float64MultiArray, Float32MultiArray, String, Bool
 from std_srvs.srv import Empty, EmptyResponse
 from rollout_node.srv import TargetAngles, IsDropped, observation, MoveServos
 import math
-
-state_form = 'pos_load_vel' # 'pos_load' or 'pos_vel' or 'pos_load_vel' or 'pos_load_vel_joints' or 'pos_load_joints' or 'all'
 
 class hand_control():
 
@@ -58,18 +65,11 @@ class hand_control():
         self.move_lift_srv = rospy.ServiceProxy('/LiftHand', Empty)
         self.reset_srv = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
-        #### Later I should remove the angles from hands.py and set initial angles here at the start ####
-
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             pub_gripper_status.publish(self.gripper_status)
             pub_drop.publish(not self.object_grasped)
 
-            self.D_load = np.copy(self.gripper_load) - np.copy(self.gripper_load_prev)
-            self.gripper_load_prev = np.copy(self.gripper_load)
-
-            # print(self.obj_pos)
-            # rospy.spin()
             rate.sleep()
 
     def callbackGripperPos(self, msg):
@@ -97,7 +97,6 @@ class hand_control():
             self.object_grasped = False
         else:
             self.object_grasped = True
-        # self.object_grasped = True if abs(Obj_pos[2]) < 1e-2 else False
 
         self.obj_pos = Obj_pos[:2]*1000 # m to mm
 
@@ -128,7 +127,7 @@ class hand_control():
             self.move_lift_srv.call()
             rospy.sleep(2.0)
             ratein.sleep()
-            if self.object_grasped:# and self.lift_s, self.obj_veltatus:
+            if self.object_grasped:
                 if self.wait2initialGrasp():
                     break
         
@@ -145,16 +144,10 @@ class hand_control():
         suc = False
         while c < 150:
             c += 1
-            # print('Load' + str(self.gripper_load))
-            # if self.gripper_load[0]!=self.gripper_load[1]: # equal when stable in the initial position
-            #     rospy.sleep(0.5)
-            #     ratein.sleep()
-            #     continue
 
             pos1 = self.obj_pos
             rospy.sleep(0.2)
             ratein.sleep()
-            # print(pos1, self.obj_pos, np.linalg.norm(pos1 - self.obj_pos))
             if np.linalg.norm(pos1 - self.obj_pos) < 2e-2:
                 suc = True
                 print('[hand_control_sim] Hand stable.')
@@ -163,7 +156,7 @@ class hand_control():
         return suc
 
     def MoveGripper(self, msg):
-        # This function should accept a vector of normalized incraments to the current angles: msg.angles = [dq1, dq2], where dq1 and dq2 can be equal to 0 (no move), 1,-1 (increase or decrease angles by finger_move_step_size)
+        # This function should accept a vector of normalized increments to the current angles: msg.angles = [dq1, dq2], where dq1 and dq2 can be equal to 0 (no move), 1,-1 (increase or decrease angles by finger_move_step_size)
 
         inc = np.array(msg.angles)
         inc_angles = np.multiply(self.finger_move_step_size, inc)
@@ -186,29 +179,6 @@ class hand_control():
 
         self.move_servos_srv.call(angles)
 
-        Obs = np.array([[-38, 117.1, 4.],
-        # [-33., 105., 4.],
-        [-33., 106.2, 4.],
-        [-52.5, 105.2, 4.],
-        [-51., 105.5, 4.],
-        [43., 111.5, 6.],
-        [59., 80., 3.],
-        [36.5, 94., 4.]
-        ])
-
-        # Obs = np.array([[-38, 117.1, 4.],
-        #     [-33., 105., 4.],
-        #     [-52.5, 105.2, 4.],
-        #     [43., 111.5, 6.],
-        #     [59., 80., 3.],
-        #     [36.5, 94., 4.]
-        # ])
-        if self.OBS:
-            for obs in Obs:
-                if np.linalg.norm(self.obj_pos-obs[:2]) < obs[2]:
-                    print('[hand_control_sim] Collision.')
-                    return False
-
         return True
 
     def CheckDropped(self, msg):
@@ -216,20 +186,8 @@ class hand_control():
         return {'dropped': not self.object_grasped}
 
     def GetObservation(self, msg):
-        if state_form == 'all':   
-            obs = np.concatenate((self.obj_pos, self.gripper_load, self.joint_states, self.joint_velocities), axis=0)
-        elif state_form == 'pos_load':
-            obs = np.concatenate((self.obj_pos, self.gripper_load), axis=0)
-        elif state_form == 'pos_vel':   
-            obs = np.concatenate((self.obj_pos, self.obj_vel), axis=0)
-        elif state_form == 'pos_load_vel':   
-            obs = np.concatenate((self.obj_pos, self.gripper_load, self.obj_vel, self.D_load), axis=0)
-        elif state_form == 'pos_load_vel_joints':   
-            obs = np.concatenate((self.obj_pos, self.gripper_load, self.obj_vel, self.joint_states), axis=0)
-        elif state_form == 'pos_load_joints':   
-            obs = np.concatenate((self.obj_pos, self.gripper_load, self.joint_states), axis=0)
+        obs = np.concatenate((self.obj_pos, self.gripper_load, self.obj_vel, self.joint_states, self.joint_velocities), axis=0)
 
-        # print obs
         return {'state': obs}
 
 

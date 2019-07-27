@@ -23,11 +23,11 @@ from scipy.io import savemat, loadmat
 rollout_srv = rospy.ServiceProxy('/rollout/rollout', rolloutReq)
 
 rospy.init_node('run_rollout_set', anonymous=True)
-state_dim = 13
+state_dim = 14
 
 path = './'
 
-rollout = 0
+rollout = 1
 
 ############################# Rollout ################################
 if rollout:
