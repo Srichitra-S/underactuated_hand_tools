@@ -24,7 +24,7 @@ submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchm
 
 ### Model T42
 
-1. To build a hand, follow instructions in the [Yale OpenHand project] (https://www.eng.yale.edu/grablab/openhand/).
+1. To build a hand, follow instructions in the Yale OpenHand [project] (https://www.eng.yale.edu/grablab/openhand/).
 
 2. Use Model T42 real hand ROS packages in `./ModelT42/`.
 
