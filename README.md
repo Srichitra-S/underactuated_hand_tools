@@ -1,4 +1,4 @@
-:construction_worker: :construction:**_This page is under construction_**:construction: :construction_worker:
+:construction_worker: :construction: **_This page is under construction_** :construction: :construction_worker:
 
 
 # Benchmarking for underactuated adaptive hands
@@ -15,6 +15,8 @@ submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchm
 ---
 ## RUM dataset
 
+[Data](https://robotics.cs.rutgers.edu/rum-dataset/)
+
 ---
 
 
@@ -22,16 +24,18 @@ submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchm
 
 ### Model T42
 
-1. Use Model T42 real hand ROS packages in `./ModelT42/`.
+1. To build a hand, follow instructions in the [Yale OpenHand project] (https://www.eng.yale.edu/grablab/openhand/).
 
-2. Load hand control node:
+2. Use Model T42 real hand ROS packages in `./ModelT42/`.
+
+3. Load hand control node:
    - Setup hand parameters in `control_blue.yaml` and `model_t42_blue.yaml` in [link](https://github.com/avishais/underactuated_hand_benchmarking/tree/master/ModelT42/hand_control/param). 
    - Run:
         ```
         roslaunch hand_control run.launch
         ```
 
-3. To collect data
+4. To collect data
    - Set the [settings yaml file](https://github.com/avishais/underactuated_hand_benchmarking/tree/master/ModelT42/collect_t42/param/settings.yaml) as desired. 
    - Run:
 
@@ -39,7 +43,7 @@ submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchm
       roslaunch collect_t42 collect.launch
       ```
 
-4. To rollout a sequence of actions, launch the required service
+5. To rollout a sequence of actions, launch the required service
    ```
    roslaunch rollout_t42 rollout.launch
    ```
