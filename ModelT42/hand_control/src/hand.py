@@ -6,7 +6,7 @@ Author: Avishai Sintov
 '''
 
 '''
-This node provides general services to control the hand.
+This node provides general services to control the Model T42 hand.
 '''
 
 
@@ -17,7 +17,6 @@ from std_srvs.srv import Empty, EmptyResponse
 from openhand.srv import MoveServos, ReadTemperature
 from hand_control.srv import TargetAngles, IsDropped, observation, close
 
-# from common_msgs_gl.srv import SendDoubleArray, SendBool
 import geometry_msgs.msg
 import math
 import time

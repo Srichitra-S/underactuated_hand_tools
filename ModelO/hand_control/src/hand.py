@@ -7,6 +7,10 @@ Author: Avishai Sintov
 ----------------------------
 '''
 
+'''
+This node provides general services to control the Model O hand.
+'''
+
 import rospy
 import numpy as np 
 from std_msgs.msg import Float64MultiArray, Float32MultiArray, String, Bool, Float32
@@ -14,7 +18,6 @@ from std_srvs.srv import Empty, EmptyResponse
 from openhand.srv import *
 from hand_control.srv import TargetAngles, IsDropped, observation, close, ObjOrientation, MovePrim
 
-# from common_msgs_gl.srv import SendDoubleArray, SendBool
 import geometry_msgs.msg
 import math
 import time
@@ -34,8 +37,6 @@ class hand_control():
     base_pos = [0,0]
     base_theta = 0
     obj_pos = [0,0]
-    obj_height = -1.0e3
-    obj_grasped_height = 1.0e3
     R = []
     count = 1
     vel_ref = np.array([0.,0.])
@@ -46,13 +47,6 @@ class hand_control():
     object_grasped = False
     drop_query = True
 
-    angle = np.array([0.])
-    marker0 = np.array([0.,0.])
-    marker1 = np.array([0.,0.])
-    marker2 = np.array([0.,0.])
-    marker3 = np.array([0.,0.])
-    cornerPos = []
-    
     move_servos_srv = 0.
     df = 0.0
     
@@ -61,7 +55,7 @@ class hand_control():
     record_trigger = False
     T = 0.0
 
-    path = '/home/pracsys/catkin_ws/src/t42_control/hand_control/data/dataset/'
+    path = './'
 
     def __init__(self):
         rospy.init_node('hand_control', anonymous=True)
@@ -76,15 +70,15 @@ class hand_control():
         rospy.Subscriber('/gripper/pos', Float32MultiArray, self.callbackGripperPos)
         rospy.Subscriber('/gripper/load', Float32MultiArray, self.callbackGripperLoad)
         rospy.Subscriber('/gripper/temperature', Float32MultiArray, self.callbackGripperTemp)
-        rospy.Subscriber('/cylinder_pose', geometry_msgs.msg.Pose, self.callbackMarkers)
-        rospy.Subscriber('cylinder_drop', Bool, self.callbackObjectDrop)
-        rospy.Subscriber('/finger_markers', geometry_msgs.msg.PoseArray, self.callAddFingerPos)
+        
         pub_gripper_status = rospy.Publisher('/gripper/gripper_status', String, queue_size=10)
         pub_drop = rospy.Publisher('/hand_control/drop', Bool, queue_size=10)
         pub_obj_pos = rospy.Publisher('/hand_control/obj_pos_mm', Float32MultiArray, queue_size=10)
         pub_obj_orientation = rospy.Publisher('/object_orientation', Float32MultiArray, queue_size=10)
-        # vel_ref_srv = rospy.ServiceProxy('/gripper_t42/vel_ref', SendDoubleArray)
-        # self.allow_motion_srv = rospy.ServiceProxy('/gripper_t42/allow_motion', SendBool)
+
+        # Marker detection - Needs to be implemented by the user
+        rospy.Subscriber('/cylinder_pose', geometry_msgs.msg.Pose, self.callbackMarkers)
+        rospy.Subscriber('/cylinder_drop', Bool, self.callbackObjectDrop)
 
         rospy.Service('/OpenGripper', Empty, self.OpenGripper)
         rospy.Service('/CloseGripper', close, self.CloseGripper)
@@ -94,9 +88,7 @@ class hand_control():
         rospy.Service('/observation', observation, self.GetObservation)
         rospy.Service('/MoveKeys', MovePrim, self.MoveKeys)
         rospy.Service('/MovePrimitives', MovePrim, self.MovePrimitives)
-        # rospy.Service('objectOrientation',ObjOrientation,self.getOrientation)
 
-        rospy.Subscriber('/cylinder_corner',geometry_msgs.msg.Pose,self.getCorner)
         self.move_servos_srv = rospy.ServiceProxy('/MoveServos', MoveServos)
         self.moveReqservo_srv = rospy.ServiceProxy('/MoveReqServos', MoveReqServos)
         self.temperature_srv = rospy.ServiceProxy('/ReadTemperature', ReadTemperature)
@@ -134,26 +126,10 @@ class hand_control():
 
             self.rate.sleep()
 
-    def getOrientation(self,req):
-        self.cornerPos = [msg.position.x, msg.position.y]
-        arr1 = self.cornerPos
-        arr2 = self.obj_pos
-        self.angle[0] = np.arctan2((arr1[1]-arr2[1]),(arr1[0]-arr2[0]))
-        self.angle = np.array(self.angle)
-        return {'ori':self.angle[0]}
-	#this is to calculate the orientation of the object in space
-
     def record(self):
         time = rospy.get_time()-self.T
         self.memory += [(time, self.Action)]
     
-    def getCorner(self,msg):
-        self.cornerPos = [msg.position.x, msg.position.y]
-        arr1 = self.cornerPos
-        arr2 = self.obj_pos
-        self.angle[0] = np.arctan2((arr1[1]-arr2[1]),(arr1[0]-arr2[0]))
-        self.angle = np.array(self.angle)
-
     def callbackGripperPos(self, msg):
         self.gripper_pos = np.array(msg.data)
 
@@ -165,30 +141,12 @@ class hand_control():
 
     def callbackMarkers(self, msg):
         try:
-            if np.abs(msg.position.x) < 0.2 and msg.position.y < 0.12 and msg.position.y > -0.5:
-                self.obj_pos = np.array([msg.position.x, msg.position.y])
-            self.obj_height = msg.position.z
+            self.obj_pos = np.array([msg.position.x, msg.position.y, msg.position.z, , msg.orientation.z, , msg.orientation.y, , msg.orientation.z]) # Position and Euler angles
         except:
-            self.obj_pos = np.array([np.nan, np.nan])
-            self.obj_height = np.nan
+            self.obj_pos = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
 
     def callbackObjectDrop(self, msg):
         self.drop_query = msg.data
-
-    def callAddFingerPos(self, msg):
-        tempMarkers =  msg.poses
-        
-        self.marker0[0] = tempMarkers[0].position.x
-        self.marker0[1] = tempMarkers[0].position.y
-
-        self.marker1[0] = tempMarkers[1].position.x
-        self.marker1[1] = tempMarkers[1].position.y
-
-        self.marker2[0] = tempMarkers[2].position.x
-        self.marker2[1] = tempMarkers[2].position.y 
-
-        self.marker3[0] = tempMarkers[3].position.x
-        self.marker3[1] = tempMarkers[3].position.y
 
     def OpenGripper(self, msg):
 
@@ -210,11 +168,9 @@ class hand_control():
         
         if np.any(self.gripper_temperature > 52.):
             rospy.logerr('[hand_control] Actuators overheated, taking a break...')
-            # rospy.signal_shutdown('[hand_control] Actuators overheated, shutting down. Disconnect power cord!')
             while 1:
                 if np.all(self.gripper_temperature < 45.):
                     break
-                # rospy.sleep(60*2)
                 self.rate.sleep()
 
         closed_load = self.closed_load#np.random.randint(70, self.closed_load+30) # !!!!!! Remember to change
@@ -278,7 +234,6 @@ class hand_control():
         ## Verify based on gripper motor angles
         print('[hand] Gripper actuator angles: ' + str(self.gripper_pos))
         self.object_grasped = self.gripper_status == 'closed'
-        self.obj_grasped_height = self.obj_height # This will have to be defined in hand base pose
 
         self.rate.sleep()
         self.gripper_cur_pos = self.gripper_pos
@@ -382,11 +337,6 @@ class hand_control():
         if action == 'y':
             inc_angles = np.multiply(self.finger_move_offset, np.array([0., 1., 1., 1.])*6)
 
-        # if action == 'q':
-        #     inc_angles = np.multiply(self.finger_move_offset, np.array([0., 1., 0., 0.]))
-        # if action == 'z':
-        #     inc_angles = np.multiply(self.finger_move_offset, np.array([1., 1., 0., 0.]))
-
         f = 15.0
         self.gripper_cur_pos += inc_angles*1.0/f
         self.gripper_cur_pos[ np.where( self.gripper_cur_pos < 0.0 )[0]] = 0.0
@@ -399,39 +349,6 @@ class hand_control():
 
     def MoveKeys(self, req):
         action = req.action
-
-        if np.any(action == np.array(['w','x','d','a','e','q','c','z'])):
-            # w - Up
-            if action == 'w':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., -1., -1., 0.]))
-            # x - Down
-            if action == 'x':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., 1., 1., 0.]))
-            # d - Right
-            if action == 'd':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., 1., -1., 0.]))
-            # a - left
-            if action == 'a':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., -1., 1., 0.]))
-            # e - Up Right
-            if action == 'e':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., -1., 0., 0.]))
-            # q - Up left
-            if action == 'q':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., 0., -1., 0.]))
-            # c - Down Right
-            if action == 'c':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., 1., 0., 0.]))
-            # z - Down left
-            if action == 'z':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0., 0., 1., 0.]))
-            # s - Stop
-            # if action == 's':
-            #     inc_angles = np.multiply(self.finger_move_offset, np.array([0., 0., 0., 0.]))
-            f = 50.0 + self.df
-            self.gripper_cur_pos += inc_angles*1.0/f
-            self.moveReqservo_srv(self.gripper_cur_pos[1:3], [1,2])
-            return True
 
         # Open and close
         if action == 'o':
@@ -456,46 +373,6 @@ class hand_control():
                 pickle.dump(self.memory, f)
             return True
         
-        # Power grip/close
-        if action == 'v':
-            inc_angles = np.multiply(self.finger_move_offset, np.array([0., 1., 1., 1.]))
-            f = 50.0 + self.df
-            self.gripper_cur_pos += inc_angles*1.0/f
-            self.moveReqservo_srv(self.gripper_cur_pos[1:], [1,2,3])
-            return True
-
-        # Move individual finger
-        if np.any(action == np.array(['1','2','3','7','8','9'])):
-            if action == '7':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0.0, 1.0, 0.0, 0.0]))
-            if action == '1':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0.0, -1.0, 0.0, 0.0]))
-            if action == '8':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0.0, 0.0, 1.0, 0.0]))
-            if action == '2':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0.0, 0.0, -1.0, 0.0]))
-            if action == '9':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0.0, 0.0, 0.0, 1.0]))
-            if action == '3':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([0.0, 0.0, 0.0, -1.0]))
-            f = 20.0 + self.df
-            self.gripper_cur_pos += inc_angles*1.0/f
-            self.moveReqservo_srv(self.gripper_cur_pos[1:], np.array([1, 2, 3]))
-            return True
-
-        # Spread
-        if np.any(action == np.array(['k','l'])):
-            if action == 'k':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([1.0, 0., 0., 0.]))
-            if action == 'l':
-                inc_angles = np.multiply(self.finger_move_offset, np.array([-1.0, 0., 0., 0.]))
-            f = 5.0 + self.df
-            self.gripper_cur_pos += inc_angles * 1.0 / f
-            self.gripper_cur_pos[0] = max(self.gripper_cur_pos[0], 0.0)
-            self.gripper_cur_pos[0] = min(self.gripper_cur_pos[0], 1.0)
-            self.moveReqservo_srv(np.array([self.gripper_cur_pos[0]]), np.array([0]))
-            return True
-
         if np.any(action == np.array(['n','m'])):
             if action == 'n':
                 self.df += 1.0
@@ -505,7 +382,6 @@ class hand_control():
                 print "Decreased velocity by 1"
         
         return False       
-
 
     def CheckDropped(self):
         # Should spin (update topics) between moveGripper and this
@@ -522,19 +398,6 @@ class hand_control():
         if abs(self.gripper_load[0]) > self.max_load or abs(self.gripper_load[1]) > self.max_load:
             verbose = '[hand] Pre-overload.'
             return True, verbose
-
-        # If object marker not visible, loop to verify and declare dropped.
-        if self.obj_height == -1000:
-            dr = True
-            for _ in range(25):
-                # print('self.obj_height is ', self.obj_height)
-                if self.obj_height != -1000:
-                    dr = False
-                    break
-                time.sleep(0.1)
-            if dr:
-                verbose = '[hand] Object not visible - assumed dropped.'
-                return True, verbose
         
         return False, ''
 
