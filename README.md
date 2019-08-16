@@ -5,8 +5,7 @@
 
 This page provides instructions and source code for benchmarking underactuated adaptive hands. This is complementary material to the paper
 
-> ***Modeling Benchmarks for Data-based Within-Hand Manipulation of
-Underactuated Adaptive Hands***
+> ***Benchmarking Data-based Within-Hand Manipulation with Underactuated Adaptive Hands***
 
 submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchmarking for Manipulations*.
 
