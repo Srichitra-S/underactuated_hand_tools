@@ -1,4 +1,4 @@
-:construction_worker: :construction: **_This page is under construction_** :construction: :construction_worker:
+ <!--:construction_worker: :construction: **_This page is under construction_** :construction: :construction_worker:-->
 
 
 # Benchmarking for underactuated adaptive hands
