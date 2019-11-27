@@ -1,19 +1,19 @@
  <!--:construction_worker: :construction: **_This page is under construction_** :construction: :construction_worker:-->
 
 
-# Benchmarking for underactuated adaptive hands
+# Tools for underactuated adaptive hands
 
-This page provides instructions and source code for benchmarking underactuated adaptive hands. This is complementary material to the paper
+This page provides instructions and source code for working with underactuated adaptive hands. This is complementary material to the paper
 
-> ***Benchmarking Data-based Within-Hand Manipulation with Underactuated Adaptive Hands***
+> ***Tools for Data-driven Modeling ofWithin-Hand Manipulation with Underactuated Adaptive Hands***
 
-submitted to the *IEEE Robotics and Automation Letters* special issue on *Benchmarking for Manipulations*.
+submitted to the *Learning for Dynamics and Control (L4DC 2020)*.
 
 **The code is based on ROS and tested on Kinetic.**
 
 To build the hands, follow instructions in the [Yale OpenHand project](https://www.eng.yale.edu/grablab/openhand/).
 
-We provide a benchmarking platform in three paths. The user can either use the *Rutgers Underactuated-hand Manipulation* (RUM) dataset, independently collect data on a real system, or collect in a simulated environment. We provide the RUM dataset and source code for the user to take on any of the paths.  
+We provide a platform in three paths. The user can either use the *Rutgers Underactuated-hand Manipulation* (RUM) dataset, independently collect data on a real system, or collect in a simulated environment. We provide the RUM dataset and source code for the user to take on any of the paths.  
 
 ---
 ## RUM dataset
