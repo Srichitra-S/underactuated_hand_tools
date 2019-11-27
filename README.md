@@ -5,7 +5,7 @@
 
 This page provides instructions and source code for working with underactuated adaptive hands. This is complementary material to the paper
 
-> ***Tools for Data-driven Modeling ofWithin-Hand Manipulation with Underactuated Adaptive Hands***
+> ***Tools for Data-driven Modeling of Within-Hand Manipulation with Underactuated Adaptive Hands***
 
 submitted to the *Learning for Dynamics and Control (L4DC 2020)*.
 
