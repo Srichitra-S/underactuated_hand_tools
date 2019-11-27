@@ -120,7 +120,7 @@ The Gazebo simulation package contains the Model-O (3-fingers), Model-T42 (2-fin
       ```
       roslaunch collect_data collect.launch
       ```
-   - In a different terinal, run:
+   - In a different terminal, run:
       ```
       rosrun collect_data run.py
       ```
